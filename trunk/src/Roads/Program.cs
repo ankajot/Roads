@@ -29,7 +29,7 @@ namespace Roads
         {
             if (args.Length < ARGS)
             {
-                Usage("");
+                Usage("size width height image_name");
                 return false;
             }
             if (!int.TryParse(args[0], out size))
@@ -54,12 +54,12 @@ namespace Roads
             }
             if (!int.TryParse(args[2], out height))
             {
-                Usage("width need to be int");
+                Usage("height need to be int");
                 return false;
             }
             if (height <= 0)
             {
-                Usage("width need to be greater than 0");
+                Usage("height need to be greater than 0");
                 return false;
             }
             fileName = args[3] + ".png";
@@ -79,16 +79,24 @@ namespace Roads
         public static void Main(string[] args)
         {
             rand = new Random();
+            DirectoryInfo di = new DirectoryInfo(Directory.GetCurrentDirectory());
+            DirectoryInfo di2 = new DirectoryInfo(di.Parent.Parent.FullName);
+            if (!Directory.Exists(di2.FullName + "\\data"))
+                Directory.CreateDirectory(di2.FullName + "\\data");
+
+            dir = di2.FullName + "\\data";
             dir = Directory.GetCurrentDirectory();
             if (args.Length == 0)
             {
+                Console.WriteLine("You can also use console interface\nRoads size width height image_name");
                 Application.EnableVisualStyles();
                 Application.Run(new GUI());
             }
             else
             {
-                TryParseAguments(args);
-                CreateImage();
+                if (TryParseAguments(args))
+                
+                    CreateImage();
             }
 
         }
