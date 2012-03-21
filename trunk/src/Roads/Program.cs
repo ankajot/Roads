@@ -29,7 +29,7 @@ namespace Roads
         {
             if (args.Length < ARGS)
             {
-                Usage("size width height image_name");
+                Usage("size width height foreground background image_name");
                 return false;
             }
             if (!int.TryParse(args[0], out size))
@@ -62,12 +62,50 @@ namespace Roads
                 Usage("height need to be greater than 0");
                 return false;
             }
-            fileName = args[3] + ".png";
+
+            //String foreColorS = args[3]; //#RRGGBB, hex
+            if (!ColorFromString(args[3], out foreColor))
+            {
+                Usage("foreground need to be in format #rrggbb");
+                return false;
+            }
+
+            if (!ColorFromString(args[4], out backColor))
+            {
+                Usage("background need to be in format #rrggbb");
+                return false;
+            }
+
+            fileName = args[5] + ".png";
             if (size % 2 == 0)
                 size += 1;
             halfSize = size / 2;
             return true;
         }
+
+        /// <summary>
+        /// Creates color structure from a string.
+        /// </summary>
+        /// <param name="s">String in format '#RRGGBB', ie: #23FF43</param>
+        /// <param name="color">Color made out the string</param>
+        /// <returns></returns>
+        private static bool ColorFromString(string s, out Color color)
+        {
+            color = Color.Black;
+            if (s == null || s.Length == 0 || s[0] != '#' || s.Length < 7) return false;
+
+            string rcolor = s.Substring(1, 2);
+            string gcolor = s.Substring(3, 2);
+            string bcolor = s.Substring(5, 2);
+
+            int rval = int.Parse(rcolor, System.Globalization.NumberStyles.HexNumber);
+            int gval = int.Parse(gcolor, System.Globalization.NumberStyles.HexNumber);
+            int bval = int.Parse(bcolor, System.Globalization.NumberStyles.HexNumber);
+
+            color = Color.FromArgb(rval, gval, bval);
+            return true;
+        }
+
         private static void Usage(string message)
         {
             if (message != "")
@@ -75,6 +113,7 @@ namespace Roads
                 Console.WriteLine("err: " + message);
             }
         }
+
         [STAThreadAttribute]
         public static void Main(string[] args)
         {
