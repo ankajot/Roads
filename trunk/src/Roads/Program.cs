@@ -13,7 +13,7 @@ namespace Roads
     class Program
     {
         private const int SHAPES = 3;
-        private const int ARGS = 4;
+        private const int ARGS = 7;
         public const int LEN = 50;
         public static int size;
         private static int halfSize;
@@ -25,11 +25,16 @@ namespace Roads
         private static Color borderColor = Color.Black;
         public static Color foreColor = Color.Red;
         public static Color backColor = Color.Snow;
+
+        public static int pensize = 1;
+        public static int halfpensize;
+
+        private static Pen borderpen;
         private static bool TryParseAguments(string[] args)
         {
             if (args.Length < ARGS)
             {
-                Usage("size width height foreground background image_name");
+                Usage("size width height foreground background border image_name");
                 return false;
             }
             if (!int.TryParse(args[0], out size))
@@ -76,7 +81,16 @@ namespace Roads
                 return false;
             }
 
-            fileName = args[5] + ".png";
+            if (!ColorFromString(args[5], out borderColor))
+            {
+                Usage("border need to be in format #rrggbb");
+                return false;
+            }
+
+            borderpen = new Pen(borderColor, pensize);
+            halfpensize = (pensize / 2);
+
+            fileName = args[6] + ".png";
             if (size % 2 == 0)
                 size += 1;
             halfSize = size / 2;
@@ -117,7 +131,7 @@ namespace Roads
         [STAThreadAttribute]
         public static void Main(string[] args)
         {
-            rand = new Random();
+            rand = new Random(1); //TODO
             DirectoryInfo di = new DirectoryInfo(Directory.GetCurrentDirectory());
             DirectoryInfo di2 = new DirectoryInfo(di.Parent.Parent.FullName);
             if (!Directory.Exists(di2.FullName + "\\data"))
@@ -224,11 +238,12 @@ namespace Roads
                 Console.Write("_");
             }
             Console.WriteLine();
-            for (int j = 1; j < height * size; j++)
-            {
-                if (CompareColors(bitmap.GetPixel(1, j), borderColor))
-                {
 
+            for (int j = 0; j < height * size; j++)
+            {
+                if (CompareColors(bitmap.GetPixel(0, j), borderColor))
+                {
+                 
                     if (!border)
                     {
                         SwitchColors();
@@ -239,24 +254,32 @@ namespace Roads
                 else
                 {
                     border = false;
-                    bitmap.SetPixel(1, j, foreColor);
+                    bitmap.SetPixel(0, j, foreColor);
                 }
             }
-            for (int i = 2; i < width * size; i++)
+            for (int i = 1; i < width * size; i++)
             {
                 SetColor(bitmap, i, 1);
                 counter = 0;
-                for (int j = 1; j < height * size; j++)
+                bool lastpixel_border = false;
+                for (int j = 0; j < height * size; j++)
                 {
+                    lastpixel_border = false;
                     if (CompareColors(bitmap.GetPixel(i, j), borderColor))
                     {
-                        counter++;
+                        if (!lastpixel_border)
+                        {
+                            counter++;
+                            lastpixel_border = true;
+                        }
                     }
 
                     else
                     {
+                        
                         if (counter > 0)
                         {
+                            
                             if (counter > 1)
                             {
                                 SetColor(bitmap, i, j);
@@ -280,7 +303,7 @@ namespace Roads
             int tmp;
             tmp = i - 1;
             int counter = 0;
-            while (CompareColors(bitmap.GetPixel(tmp, j), borderColor))
+            while (tmp > 0 && CompareColors(bitmap.GetPixel(tmp, j), borderColor))
             {
                 tmp--;
                 counter++;
@@ -328,20 +351,22 @@ namespace Roads
             }
             return bitmap;
         }
+
         private static void DrawCurveRight(Graphics g, int i, int j)
         {
-            g.DrawArc(Pens.Black, i * size - halfSize, j * size - halfSize, size, size, 0, 90);
-            g.DrawArc(Pens.Black, (i + 1) * size - halfSize, (j + 1) * size - halfSize, size, size, 180, 90);
+
+            g.DrawArc(borderpen, i * size - halfSize - halfpensize - 1, j * size - halfSize - halfpensize - 1, size + halfpensize + 1, size + halfpensize + 1, 0, 90);
+            g.DrawArc(borderpen, (i + 1) * size - halfSize, (j + 1) * size - halfSize, size, size, 180, 90);
         }
         private static void DrawCurveLeft(Graphics g, int i, int j)
         {
-            g.DrawArc(Pens.Black, i * size - halfSize, (j + 1) * size - halfSize, size, size, 270, 90);
-            g.DrawArc(Pens.Black, (i + 1) * size - halfSize, j * size - halfSize, size, size, 90, 90);
+            g.DrawArc(borderpen, i * size - halfSize - halfpensize - 1, (j + 1) * size - halfSize , size + halfpensize + 1, size, 270, 90);
+            g.DrawArc(borderpen, (i + 1) * size - halfSize, j * size - halfSize - halfpensize - 1, size, size + halfpensize + 1, 90, 90);
         }
         private static void DrawCross(Graphics g, int i, int j)
         {
-            g.DrawLine(Pens.Black, new Point(i * size, j * size + halfSize + 1), new Point((i + 1) * size, j * size + halfSize + 1));
-            g.DrawLine(Pens.Black, new Point(i * size + halfSize + 1, j * size), new Point(i * size + halfSize + 1, (j + 1) * size + 1));
+            g.DrawLine(borderpen, new Point(i * size, j * size + halfSize + 1), new Point((i + 1) * size, j * size + halfSize + 1));
+            g.DrawLine(borderpen, new Point(i * size + halfSize + 1, j * size), new Point(i * size + halfSize + 1, (j + 1) * size + 1));
         }
     }
 }
