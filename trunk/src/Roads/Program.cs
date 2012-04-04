@@ -13,7 +13,7 @@ namespace Roads
     class Program
     {
         private const int SHAPES = 3;
-        private const int ARGS = 7;
+        private const int ARGS = 8;
         public const int LEN = 50;
         public static int size;
         private static int halfSize;
@@ -30,11 +30,15 @@ namespace Roads
         public static int halfpensize;
 
         private static Pen borderpen;
+		
         private static bool TryParseAguments(string[] args)
         {
             if (args.Length < ARGS)
             {
-                Usage("size width height foreground background border image_name");
+				foreach (string arg in args) {
+					Console.WriteLine(arg);
+				}
+                Usage("size width height foreground background border_color border_size image_name");
                 return false;
             }
             if (!int.TryParse(args[0], out size))
@@ -86,11 +90,16 @@ namespace Roads
                 Usage("border need to be in format #rrggbb");
                 return false;
             }
+			
+			if (!int.TryParse(args[6], out pensize) && pensize<=0 )
+			{
+				Usage ("pensize need to be a positive integer");
+			}
 
             borderpen = new Pen(borderColor, pensize);
             halfpensize = (pensize / 2);
 
-            fileName = args[6] + ".png";
+            fileName = args[7] + ".png";
             if (size % 2 == 0)
                 size += 1;
             halfSize = size / 2;
