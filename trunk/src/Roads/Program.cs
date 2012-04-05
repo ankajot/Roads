@@ -13,7 +13,7 @@ namespace Roads
     class Program
     {
         private const int SHAPES = 3;
-        private const int ARGS = 8;
+        private const int ARGS = 9;
         public const int LEN = 50;
         public static int size;
         private static int halfSize;
@@ -30,6 +30,35 @@ namespace Roads
         public static int halfpensize;
 
         private static Pen borderpen;
+		private static int antialiasFactor = 1;
+		
+		/// <summary>
+        /// Resize the image to the specified width and height.
+        /// </summary>
+        /// <param name="image">The image to resize.</param>
+        /// <param name="width">The width to resize to.</param>
+        /// <param name="height">The height to resize to.</param>
+        /// <returns>The resized image.</returns>
+        public static System.Drawing.Bitmap ResizeImage(System.Drawing.Image image, int width, int height)
+        {
+            //a holder for the result
+            Bitmap result = new Bitmap(width, height);
+
+            //use a graphics object to draw the resized image into the bitmap
+            using (Graphics graphics = Graphics.FromImage(result))
+            {
+                //set the resize quality modes to high quality
+                graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
+                graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                //draw the image into the target bitmap
+                graphics.DrawImage(image, 0, 0, result.Width, result.Height);
+            }
+
+            //return the resulting bitmap
+            return result;
+        }
+
 		
         private static bool TryParseAguments(string[] args)
         {
@@ -38,7 +67,7 @@ namespace Roads
 				foreach (string arg in args) {
 					Console.WriteLine(arg);
 				}
-                Usage("size width height foreground background border_color border_size image_name");
+                Usage("size width height foreground background border_color border_size antialias_factor image_name");
                 return false;
             }
             if (!int.TryParse(args[0], out size))
@@ -95,11 +124,19 @@ namespace Roads
 			{
 				Usage ("pensize need to be a positive integer");
 			}
+			
+			if (!int.TryParse(args[7], out antialiasFactor) && !(antialiasFactor==0 || antialiasFactor==2 || antialiasFactor==4) )
+			{
+				Usage ("antialiasFactor has to be 1 2 or 4");
+			}
+			
+			pensize *= antialiasFactor;
+			size *= antialiasFactor;
 
             borderpen = new Pen(borderColor, pensize);
             halfpensize = (pensize / 2);
 
-            fileName = args[7] + ".png";
+            fileName = args[8] + ".png";
             if (size % 2 == 0)
                 size += 1;
             halfSize = size / 2;
@@ -177,6 +214,14 @@ namespace Roads
             Bitmap bitmap = CreateBitmap();
             ColorBitmap(bitmap);
             Directory.SetCurrentDirectory(dir);
+			
+			
+			if (antialiasFactor != 1)
+			{
+				//Bitmap smaller = ResizeImage(bitmap, bitmap.Width/antialiasFactor, bitmap.Height/antialiasFactor );
+				//bitmap = smaller;
+			}
+			
             bitmap.Save(fileName, ImageFormat.Png);
             Console.WriteLine("Image created sucesfully!\n\n");
         }
