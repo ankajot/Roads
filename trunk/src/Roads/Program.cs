@@ -129,17 +129,21 @@ namespace Roads
 			{
 				Usage ("antialiasFactor has to be 1 2 or 4");
 			}
+
+            if (size % 2 == 0)
+                size += 1;
 			
 			pensize *= antialiasFactor;
 			size *= antialiasFactor;
+
+            
+            halfSize = size / 2;
 
             borderpen = new Pen(borderColor, pensize);
             halfpensize = (pensize / 2);
 
             fileName = args[8] + ".png";
-            if (size % 2 == 0)
-                size += 1;
-            halfSize = size / 2;
+            
             return true;
         }
 
@@ -218,8 +222,8 @@ namespace Roads
 			
 			if (antialiasFactor != 1)
 			{
-				//Bitmap smaller = ResizeImage(bitmap, bitmap.Width/antialiasFactor, bitmap.Height/antialiasFactor );
-				//bitmap = smaller;
+				Bitmap smaller = ResizeImage(bitmap, bitmap.Width/antialiasFactor, bitmap.Height/antialiasFactor );
+			    bitmap = smaller;
 			}
 			
             bitmap.Save(fileName, ImageFormat.Png);
