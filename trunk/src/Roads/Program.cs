@@ -175,7 +175,7 @@ namespace Roads
         public static void CreateImage()
         {
             Bitmap bitmap = CreateBitmap();
-            ColorBitmap(bitmap);
+            FloodColorBitmap(bitmap);
             Directory.SetCurrentDirectory(dir);
             bitmap.Save(fileName, ImageFormat.Png);
             Console.WriteLine("Image created sucesfully!\n\n");
@@ -307,6 +307,90 @@ namespace Roads
             }
             Console.WriteLine();
         }
+
+        private static void FloodColorBitmap(Bitmap bitmap)
+        {
+            bool border = false;
+            for (int j = 0; j < height * size; j++)
+            {
+                if (CompareColors(bitmap.GetPixel(0, j), borderColor))
+                {
+
+                    if (!border)
+                    {
+                        SwitchColors();
+                        border = true;
+                    }
+                }
+
+                else
+                {
+                    border = false;
+                    FloodFill(bitmap, 0, j);
+                    //bitmap.SetPixel(0, j, foreColor);
+                }
+            }
+
+            
+            for (int j = 0; j < height * size; j++)
+            {
+                int borderSize = 0;
+                if (bitmap.GetPixel(0, j) == borderColor)
+                {
+                    continue;
+                }
+                else
+                {
+                    if (bitmap.GetPixel(0, j) != foreColor)
+                    {
+                        SwitchColors();
+                    }
+                }
+
+                
+                for (int i = 1; i < width * size; i++)
+                {
+                    if (bitmap.GetPixel(i, j) == borderColor)
+                    {
+                        borderSize++;
+                        if (borderSize > pensize)
+                        {
+                            // "fatal", uciekamy
+                            i = width * size;
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        if (bitmap.GetPixel(i, j) != foreColor)
+                        {
+                            SwitchColors();
+                        }
+                        borderSize = 0;
+                        FloodFill(bitmap, i, j);
+                    }
+                }
+            }
+        }
+
+        private static int[,] floodMask = new int[4, 2] { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+        private static void FloodFill(Bitmap bitmap, int x, int y)
+        {
+            
+
+            for (int i = 0; i < 4; i++)
+            {
+                int targetX = x + floodMask[i, 0];
+                int targetY = y + floodMask[i, 1];
+                if (targetX < 0 || targetX >= bitmap.Width || targetY < 0 || targetY >= bitmap.Height) continue;
+                if (bitmap.GetPixel(targetX, targetY) != backColor && bitmap.GetPixel(targetX, targetY) != borderColor && bitmap.GetPixel(targetX, targetY) != foreColor)
+                {
+                    bitmap.SetPixel(targetX, targetY, foreColor);
+                    FloodFill(bitmap, targetX, targetY);
+                }
+            }
+        }
+
         private static void SetColor(Bitmap bitmap, int i, int j)
         {
             int tmp;
