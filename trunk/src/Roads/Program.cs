@@ -198,41 +198,48 @@ namespace Roads
             else
             {
                 if (TryParseAguments(args))
-                
-                    CreateImage();
+                {
+                    for (int i = 0; i < LEN; i++)
+                    {
+                        Console.Write("_");
+                    }
+                    Console.WriteLine("");
+                    BackgroundWorker mybw = new BackgroundWorker();
+                    mybw.ProgressChanged += new ProgressChangedEventHandler(mybw_ProgressChanged);
+                    mybw.WorkerReportsProgress = true;
+                    CreateImage(mybw);
+                    Console.WriteLine("\nImage created sucesfully!\n\n");
+                }
             }
 
         }
+
+        static void mybw_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            for (int i = 0; i < e.ProgressPercentage; i++)
+                Console.Write("#");
+        }
+
         public static void CreateImage(BackgroundWorker bg)
         {
-            if (size % 2 == 0)
-                size += 1;
-            halfSize = size / 2;
             Bitmap bitmap = CreateBitmap();
-            ColorBitmap(bitmap,bg);
+            FloodColorBitmap(bitmap,bg);
             Directory.SetCurrentDirectory(dir);
+
+            if (antialiasFactor != 1)
+            {
+                Bitmap smaller = ResizeImage(bitmap, bitmap.Width / antialiasFactor, bitmap.Height / antialiasFactor);
+                bitmap = smaller;
+            }
+
             bitmap.Save(fileName, ImageFormat.Png);
         }
-        public static void CreateImage()
-        {
-            Bitmap bitmap = CreateBitmap();
-            FloodColorBitmap(bitmap);
-            Directory.SetCurrentDirectory(dir);
-			
-			
-			if (antialiasFactor != 1)
-			{
-				Bitmap smaller = ResizeImage(bitmap, bitmap.Width/antialiasFactor, bitmap.Height/antialiasFactor );
-			    bitmap = smaller;
-			}
-			
-            bitmap.Save(fileName, ImageFormat.Png);
-            Console.WriteLine("Image created sucesfully!\n\n");
-        }
+
         private static bool CompareColors(Color color1, Color color2)
         {
             return color1.ToArgb().Equals(color2.ToArgb());
         }
+
         private static void ColorBitmap(Bitmap bitmap, BackgroundWorker bw)
         {
             bool border = false;
@@ -334,7 +341,6 @@ namespace Roads
 
                     else
                     {
-                        
                         if (counter > 0)
                         {
                             
@@ -357,7 +363,7 @@ namespace Roads
             Console.WriteLine();
         }
 
-        private static void FloodColorBitmap(Bitmap bitmap)
+        private static void FloodColorBitmap(Bitmap bitmap, BackgroundWorker bw)
         {
             //kreslimy pierwszą linię, to jest w miare proste
             bool border = false;
@@ -380,7 +386,6 @@ namespace Roads
                     FloodFill(bitmap, 0, j);
                 }
             }
-
 
             for (int j = 0; j < height * size; j++)
             {
@@ -421,6 +426,11 @@ namespace Roads
                         borderSize = 0;
                         FloodFill(bitmap, i, j);
                     }
+                }
+
+                if (j % (height * size / LEN) == 0)
+                {
+                    bw.ReportProgress(1);
                 }
             }
         }
