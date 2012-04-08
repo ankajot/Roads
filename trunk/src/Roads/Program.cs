@@ -150,17 +150,17 @@ namespace Roads
         /// <summary>
         /// Creates color structure from a string.
         /// </summary>
-        /// <param name="s">String in format '#RRGGBB', ie: #23FF43</param>
+        /// <param name="s">String in format 'RRGGBB', ie: 23FF43</param>
         /// <param name="color">Color made out the string</param>
         /// <returns></returns>
         private static bool ColorFromString(string s, out Color color)
         {
             color = Color.Black;
-            if (s == null || s.Length == 0 || s[0] != '#' || s.Length < 7) return false;
+            if (s == null || s.Length == 0 || s.Length < 6) return false;
 
-            string rcolor = s.Substring(1, 2);
-            string gcolor = s.Substring(3, 2);
-            string bcolor = s.Substring(5, 2);
+            string rcolor = s.Substring(0, 2);
+            string gcolor = s.Substring(2, 2);
+            string bcolor = s.Substring(4, 2);
 
             int rval = int.Parse(rcolor, System.Globalization.NumberStyles.HexNumber);
             int gval = int.Parse(gcolor, System.Globalization.NumberStyles.HexNumber);
