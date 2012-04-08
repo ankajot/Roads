@@ -359,6 +359,7 @@ namespace Roads
 
         private static void FloodColorBitmap(Bitmap bitmap)
         {
+            //kreslimy pierwszą linię, to jest w miare proste
             bool border = false;
             for (int j = 0; j < height * size; j++)
             {
@@ -375,12 +376,12 @@ namespace Roads
                 else
                 {
                     border = false;
+                    //ale zamiast kreślić kreski to robimy floodfilla
                     FloodFill(bitmap, 0, j);
-                    //bitmap.SetPixel(0, j, foreColor);
                 }
             }
 
-            
+
             for (int j = 0; j < height * size; j++)
             {
                 int borderSize = 0;
@@ -396,7 +397,7 @@ namespace Roads
                     }
                 }
 
-                
+                //probujemy kreślić w bok poczynając od tamtej kreski
                 for (int i = 1; i < width * size; i++)
                 {
                     if (bitmap.GetPixel(i, j) == borderColor)
@@ -404,15 +405,17 @@ namespace Roads
                         borderSize++;
                         if (borderSize > pensize)
                         {
-                            // "fatal", uciekamy
+                            // jeśli napotkaliśmy na grubą kreskę to uciekamy
                             i = width * size;
                             continue;
+                            //...i mamy nadzieję, że poozostałe floodfille to wypełnią
                         }
                     }
                     else
                     {
                         if (bitmap.GetPixel(i, j) != foreColor)
                         {
+                            //była krawędź, ale mała. sprawdzamy czy musimy zmienić kolor
                             SwitchColors();
                         }
                         borderSize = 0;
@@ -422,20 +425,28 @@ namespace Roads
             }
         }
 
+        //Wypełnianie rekurencyjne było brzydkie i nie działało (stackoverflow)
+        private static Stack<KeyValuePair<int, int>> posStack = new Stack<KeyValuePair<int, int>>();
         private static int[,] floodMask = new int[4, 2] { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
         private static void FloodFill(Bitmap bitmap, int x, int y)
         {
-            
+            posStack.Clear();
 
-            for (int i = 0; i < 4; i++)
+            posStack.Push(new KeyValuePair<int, int>(x, y));
+
+            while (posStack.Count != 0)
             {
-                int targetX = x + floodMask[i, 0];
-                int targetY = y + floodMask[i, 1];
-                if (targetX < 0 || targetX >= bitmap.Width || targetY < 0 || targetY >= bitmap.Height) continue;
-                if (bitmap.GetPixel(targetX, targetY) != backColor && bitmap.GetPixel(targetX, targetY) != borderColor && bitmap.GetPixel(targetX, targetY) != foreColor)
+                KeyValuePair<int, int> now = posStack.Pop();
+                for (int i = 0; i < 4; i++)
                 {
-                    bitmap.SetPixel(targetX, targetY, foreColor);
-                    FloodFill(bitmap, targetX, targetY);
+                    int targetX = now.Key + floodMask[i, 0];
+                    int targetY = now.Value + floodMask[i, 1];
+                    if (targetX < 0 || targetX >= bitmap.Width || targetY < 0 || targetY >= bitmap.Height) continue;
+                    if (bitmap.GetPixel(targetX, targetY) != backColor && bitmap.GetPixel(targetX, targetY) != borderColor && bitmap.GetPixel(targetX, targetY) != foreColor)
+                    {
+                        bitmap.SetPixel(targetX, targetY, foreColor);
+                        posStack.Push(new KeyValuePair<int, int>(targetX, targetY));
+                    }
                 }
             }
         }
