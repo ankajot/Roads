@@ -181,7 +181,7 @@ namespace Roads
         [STAThreadAttribute]
         public static void Main(string[] args)
         {
-            rand = new Random(1); //TODO
+            rand = new Random();
             DirectoryInfo di = new DirectoryInfo(Directory.GetCurrentDirectory());
             DirectoryInfo di2 = new DirectoryInfo(di.Parent.Parent.FullName);
             if (!Directory.Exists(di2.FullName + "\\data"))
