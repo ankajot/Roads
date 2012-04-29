@@ -223,7 +223,7 @@ namespace Roads
         public static void CreateImage(BackgroundWorker bg)
         {
             Bitmap bitmap = CreateBitmap();
-            FloodColorBitmap(bitmap,bg);
+            FloodColorBitmap(ref bitmap,bg);
             Directory.SetCurrentDirectory(dir);
 
             if (antialiasFactor != 1)
@@ -363,13 +363,23 @@ namespace Roads
             Console.WriteLine();
         }
 
-        private static void FloodColorBitmap(Bitmap bitmap, BackgroundWorker bw)
+
+        private static void FloodColorBitmap(ref Bitmap safeBitmap, BackgroundWorker bw)
         {
+            UnsafeBitmap bitmap = new UnsafeBitmap(safeBitmap);
+            bitmap.LockBitmap();
+
             //kreslimy pierwszą linię, to jest w miare proste
             bool border = false;
+
+            PixelData pd;
+            Color pixel;
+
             for (int j = 0; j < height * size; j++)
             {
-                if (CompareColors(bitmap.GetPixel(0, j), borderColor))
+                pd = bitmap.GetPixel(0, j);
+                pixel = Color.FromArgb(pd.red, pd.green, pd.blue);
+                if (CompareColors(pixel, borderColor))
                 {
 
                     if (!border)
@@ -390,13 +400,15 @@ namespace Roads
             for (int j = 0; j < height * size; j++)
             {
                 int borderSize = 0;
-                if (bitmap.GetPixel(0, j) == borderColor)
+                pd = bitmap.GetPixel(0, j);
+                pixel = Color.FromArgb(pd.red, pd.green, pd.blue);
+                if (pixel == borderColor)
                 {
                     continue;
                 }
                 else
                 {
-                    if (bitmap.GetPixel(0, j) != foreColor)
+                    if (pixel != foreColor)
                     {
                         SwitchColors();
                     }
@@ -405,7 +417,9 @@ namespace Roads
                 //probujemy kreślić w bok poczynając od tamtej kreski
                 for (int i = 1; i < width * size; i++)
                 {
-                    if (bitmap.GetPixel(i, j) == borderColor)
+                    pd = bitmap.GetPixel(i, j);
+                    pixel = Color.FromArgb(pd.red, pd.green, pd.blue);
+                    if (pixel == borderColor)
                     {
                         borderSize++;
                         if (borderSize > pensize)
@@ -418,7 +432,9 @@ namespace Roads
                     }
                     else
                     {
-                        if (bitmap.GetPixel(i, j) != foreColor)
+                        pd = bitmap.GetPixel(i, j);
+                        pixel = Color.FromArgb(pd.red, pd.green, pd.blue);
+                        if (pixel != foreColor)
                         {
                             //była krawędź, ale mała. sprawdzamy czy musimy zmienić kolor
                             SwitchColors();
@@ -433,16 +449,21 @@ namespace Roads
                     bw.ReportProgress(1);
                 }
             }
+            bitmap.UnlockBitmap();
+            safeBitmap = bitmap.Bitmap;
         }
 
         //Wypełnianie rekurencyjne było brzydkie i nie działało (stackoverflow)
         private static Stack<KeyValuePair<int, int>> posStack = new Stack<KeyValuePair<int, int>>();
         private static int[,] floodMask = new int[4, 2] { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
-        private static void FloodFill(Bitmap bitmap, int x, int y)
+        private static void FloodFill(UnsafeBitmap bitmap, int x, int y)
         {
             posStack.Clear();
 
             posStack.Push(new KeyValuePair<int, int>(x, y));
+
+            PixelData pd;
+            Color pixel;
 
             while (posStack.Count != 0)
             {
@@ -451,10 +472,15 @@ namespace Roads
                 {
                     int targetX = now.Key + floodMask[i, 0];
                     int targetY = now.Value + floodMask[i, 1];
-                    if (targetX < 0 || targetX >= bitmap.Width || targetY < 0 || targetY >= bitmap.Height) continue;
-                    if (bitmap.GetPixel(targetX, targetY) != backColor && bitmap.GetPixel(targetX, targetY) != borderColor && bitmap.GetPixel(targetX, targetY) != foreColor)
+                    if (targetX < 0 || targetX >= bitmap.Bitmap.Width || targetY < 0 || targetY >= bitmap.Bitmap.Height) continue;
+                    pd = bitmap.GetPixel(targetX, targetY);
+                    pixel = Color.FromArgb(pd.red, pd.green, pd.blue);
+                    if (pixel != backColor && pixel != borderColor && pixel != foreColor)
                     {
-                        bitmap.SetPixel(targetX, targetY, foreColor);
+                        pd.blue = foreColor.B;
+                        pd.red = foreColor.R;
+                        pd.green = foreColor.G;
+                        bitmap.SetPixel(targetX, targetY, pd);
                         posStack.Push(new KeyValuePair<int, int>(targetX, targetY));
                     }
                 }
@@ -498,15 +524,19 @@ namespace Roads
             {
                 for (int j = 0; j < height; j++)
                 {
-                    switch (rand.Next() % SHAPES)
+                    switch (rand.Next() % (SHAPES+4))
                     {
                         case 0:
                             DrawCross(g, i, j);
                             break;
                         case 1:
+                        case 3:
+                        case 5:
                             DrawCurveLeft(g, i, j);
                             break;
                         case 2:
+                        case 4:
+                        case 6:
                             DrawCurveRight(g, i, j);
                             break;
                     }
